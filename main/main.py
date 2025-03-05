@@ -50,6 +50,14 @@ async def yandex_news(message: types.Message):
     )
 
 
+# Обработчик для кнопки "РИА Новости"
+@dp.message(F.text == "РИА Новости")
+async def ria_news(message: types.Message):
+    await message.answer(
+        'Посмотреть новости на сайте: [РИА Новости](https://ria.ru/?ysclid=m7m6rbckm5753078186)',
+        parse_mode='Markdown'
+    )
+
 
 # Запуск бота
 if __name__ == '__main__':

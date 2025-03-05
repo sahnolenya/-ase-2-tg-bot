@@ -41,6 +41,13 @@ async def news(message: types.Message):
     await message.answer('Где вы хотите посмотреть новости?', reply_markup=markup)
 
 
+# Обработчик для кнопки "Яндекс Дзен"
+@dp.message(F.text == "Яндекс Дзен")
+async def yandex_news(message: types.Message):
+    await message.answer(
+        'Посмотреть новости на сайте: [Яндекс Дзен](https://dzen.ru/?ysclid=m7m6q9lrbo332170005)',
+        parse_mode='Markdown'
+    )
 
 
 

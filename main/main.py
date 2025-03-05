@@ -48,7 +48,13 @@ async def yandex_news(message: types.Message):
         'Посмотреть новости на сайте: [Яндекс Дзен](https://dzen.ru/?ysclid=m7m6q9lrbo332170005)',
         parse_mode='Markdown'
     )
-
+# Обработчик для кнопки "Новости РБК"
+@dp.message(F.text == "Новости РБК")
+async def rbc_news(message: types.Message):
+    await message.answer(
+        'Посмотреть новости на сайте: [Новости РБК](https://www.rbc.ru/?ysclid=m7m6pgzzqi625183162)',
+        parse_mode='Markdown'
+    )
 
 # Обработчик для кнопки "РИА Новости"
 @dp.message(F.text == "РИА Новости")

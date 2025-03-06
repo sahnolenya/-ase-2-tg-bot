@@ -2,10 +2,10 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 from aiogram import F
-from config.config import BOT_TOKEN  # Импортируем токен из config.py
+from config.config import TOKEN # Импортируем токен из config.py
 
 # Инициализация бота
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(token=TOKEN)
 
 # Инициализация диспетчера
 dp = Dispatcher()

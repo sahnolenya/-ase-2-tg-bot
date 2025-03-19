@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="e91e3e72-6c03-405f-b17f-3586fe8f966d" name="Changes" comment="Выполнили слияние веток">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requiremets.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +58,11 @@
     &quot;last_opened_file_path&quot;: &quot;D:/PyCharm/Задачи/-ase-2-tg-bot&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\PyCharm\Задачи\-ase-2-tg-bot" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -236,6 +242,7 @@
     <MESSAGE value="Изменения в неверсированных файлах" />
     <MESSAGE value="Изменения gitignore и неверсированный файл" />
     <MESSAGE value="Выполнили слияние веток" />
-    <option name="LAST_COMMIT_MESSAGE" value="Выполнили слияние веток" />
+    <MESSAGE value="Поправили ошибки" />
+    <option name="LAST_COMMIT_MESSAGE" value="Поправили ошибки" />
   </component>
 </project>

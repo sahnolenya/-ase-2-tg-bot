@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e91e3e72-6c03-405f-b17f-3586fe8f966d" name="Changes" comment="Изменения в неверсированных файлах">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+    <list default="true" id="e91e3e72-6c03-405f-b17f-3586fe8f966d" name="Changes" comment="Выполнили слияние веток">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requiremets.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -193,7 +193,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741551657580</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Выполнили слияние веток">
+      <option name="closed" value="true" />
+      <created>1742355659235</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1742355659235</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -226,6 +234,8 @@
     <MESSAGE value="Обработчик для кнопки Новости РБК" />
     <MESSAGE value="1 - Сделали токен не видимым для обычных пользователей.&#10;2 - Сохранили все пакеты в файл requiremets.txt&#10;3 - изменили файл config.py" />
     <MESSAGE value="Изменения в неверсированных файлах" />
-    <option name="LAST_COMMIT_MESSAGE" value="Изменения в неверсированных файлах" />
+    <MESSAGE value="Изменения gitignore и неверсированный файл" />
+    <MESSAGE value="Выполнили слияние веток" />
+    <option name="LAST_COMMIT_MESSAGE" value="Выполнили слияние веток" />
   </component>
 </project>

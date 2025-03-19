@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e91e3e72-6c03-405f-b17f-3586fe8f966d" name="Changes" comment="1 - Сделали токен не видимым для обычных пользователей.&#10;2 - Сохранили все пакеты в файл requiremets.txt&#10;3 - изменили файл config.py">
-      <change beforePath="$PROJECT_DIR$/main/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.py" afterDir="false" />
+    <list default="true" id="e91e3e72-6c03-405f-b17f-3586fe8f966d" name="Changes" comment="Изменения в неверсированных файлах">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,6 +225,7 @@
     <MESSAGE value="Добавил обработку для кнопки &quot;Новости РБК&quot;" />
     <MESSAGE value="Обработчик для кнопки Новости РБК" />
     <MESSAGE value="1 - Сделали токен не видимым для обычных пользователей.&#10;2 - Сохранили все пакеты в файл requiremets.txt&#10;3 - изменили файл config.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="1 - Сделали токен не видимым для обычных пользователей.&#10;2 - Сохранили все пакеты в файл requiremets.txt&#10;3 - изменили файл config.py" />
+    <MESSAGE value="Изменения в неверсированных файлах" />
+    <option name="LAST_COMMIT_MESSAGE" value="Изменения в неверсированных файлах" />
   </component>
 </project>

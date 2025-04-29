@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -21,5 +20,5 @@ def test_env_file_exists():
 
 def test_env_variable_loaded():
     load_dotenv()
-    bot_token = os.getenv("TOKEN")
+    bot_token = os.getenv("BOT_TOKEN")
     assert bot_token, "TOKEN не найден в переменных окружения"

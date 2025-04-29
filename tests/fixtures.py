@@ -18,7 +18,6 @@ def mock_message():
     mock_msg.from_user.username = AsyncMock()
     return mock_msg
 
-
 @pytest.fixture
 def mock_router():
     """Mock роутер"""

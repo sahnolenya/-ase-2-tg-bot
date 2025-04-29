@@ -1,1 +1,9 @@
-BOT_TOKEN = '7138384442:AAGnkXnyQU3B-5rtU7FVxY5bh1TNk55znqY'
+import logging
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    filename="logs/bot.log",
+    filemode="a",
+)
+logger = logging.getLogger(__name__)

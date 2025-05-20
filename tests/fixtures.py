@@ -1,25 +1,34 @@
-
 import pytest
-from unittest.mock import AsyncMock
-from aiogram.types import Message
-from aiogram import Router
+from unittest.mock import AsyncMock, MagicMock
+from aiogram.types import Message, CallbackQuery
 
-# Фикстуры в pytest позволяют выносить в отдельные функции типовые действия
-# например: настройка тестового окружения, создание тестовых данных, выполнение завершающие действия
-# https://habr.com/ru/articles/731296/
+@pytest.fixture
+def mock_bot():
+    mock = AsyncMock()
+    mock.set_my_commands = AsyncMock()
+    return mock
+
+@pytest.fixture
+def mock_dispatcher():
+    mock = AsyncMock()
+    mock.start_polling = AsyncMock()
+    mock.include_router = MagicMock()
+    return mock
 
 @pytest.fixture
 def mock_message():
-    """Mock сообщение"""
-    mock_msg = AsyncMock(spec=Message)
-    mock_msg.answer = AsyncMock()
-    mock_msg.from_user = AsyncMock()
-    mock_msg.from_user.id = AsyncMock()
-    mock_msg.from_user.username = AsyncMock()
-    return mock_msg
+    mock = AsyncMock(spec=Message)
+    mock.answer = AsyncMock(return_value=None)
+    mock.from_user = MagicMock()
+    mock.from_user.id = 123
+    mock.text = ""
+    return mock
 
 @pytest.fixture
-def mock_router():
-    """Mock роутер"""
-    router = Router()
-    return router
+def mock_callback():
+    mock = AsyncMock(spec=CallbackQuery)
+    mock.message = AsyncMock(spec=Message)
+    mock.message.answer = AsyncMock(return_value=None)
+    mock.data = ""
+    mock.answer = AsyncMock(return_value=None)
+    return mock

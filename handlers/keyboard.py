@@ -20,3 +20,22 @@ def get_news_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True
     )
+
+def get_role_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Преподаватель")],
+            [KeyboardButton(text="Слушатель")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+def get_confirm_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Отмена")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )

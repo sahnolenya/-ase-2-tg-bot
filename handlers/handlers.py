@@ -1,11 +1,16 @@
 from aiogram import types, Router, F
 from aiogram.filters import Command
-from .keyboard import get_main_keyboard, get_news_keyboard, get_role_keyboard, get_confirm_keyboard
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from keyboard import get_main_keyboard, get_news_keyboard, get_role_keyboard, get_confirm_keyboard
 from database import Session, User, generate_tutor_code
 import logging
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
 
-logger = logging.getLogger(__name__)
 router = Router()
+logger = logging.getLogger(__name__)
+
 
 async def register_user(user_id: int, username: str, role: str = None, tutorcode: str = None, subscribe: str = None):
     with Session() as session:
@@ -106,41 +111,261 @@ async def handle_status(message: types.Message):
                 f"Код для студентов: {user.tutorcode}"
             )
 
-# Остальные существующие обработчики
-@router.message(F.text == "Новости")
-async def handle_news(message: types.Message):
-    logger.info(f"User {message.from_user.id} selected 'News'")
-    await message.answer(
-        "Где вы хотите посмотреть новости?",
-19:08
 
+# Категории для каждого источника
+CATEGORIES = {
+    "yandex": ["Технологии", "Наука", "Искусство"],
+    "rbc": ["Политика", "Экономика", "Технологии"],
+    "ria": ["Политика", "Экономика", "Наука"]
+}
 
-reply_markup=get_news_keyboard()
-    )
 
 @router.message(F.text == "Яндекс Дзен")
 async def yandex_news(message: types.Message):
     logger.info(f"User {message.from_user.id} selected 'Yandex Zen'")
+
+    builder = InlineKeyboardBuilder()
+    for category in CATEGORIES["yandex"]:
+        builder.button(text=category, callback_data=f"zen_{category.lower()}")
+
+    builder.adjust(1)
     await message.answer(
-        'Посмотреть новости на сайте: [Яндекс Дзен](https://dzen.ru/)',
-        parse_mode='Markdown'
+        "Выберите категорию новостей Яндекс Дзен:",
+        reply_markup=builder.as_markup()
     )
+
 
 @router.message(F.text == "Новости РБК")
 async def rbc_news(message: types.Message):
     logger.info(f"User {message.from_user.id} selected 'RBC News'")
+
+    builder = InlineKeyboardBuilder()
+    for category in CATEGORIES["rbc"]:
+        builder.button(text=category, callback_data=f"rbc_{category.lower()}")
+
+    builder.adjust(1)
     await message.answer(
-        'Посмотреть новости на сайте: [Новости РБК](https://www.rbc.ru/)',
-        parse_mode='Markdown'
+        "Выберите категорию новостей РБК:",
+        reply_markup=builder.as_markup()
     )
+
 
 @router.message(F.text == "РИА Новости")
 async def ria_news(message: types.Message):
     logger.info(f"User {message.from_user.id} selected 'RIA News'")
+
+    builder = InlineKeyboardBuilder()
+    for category in CATEGORIES["ria"]:
+        builder.button(text=category, callback_data=f"ria_{category.lower()}")
+
+    builder.adjust(1)
     await message.answer(
-        'Посмотреть новости на сайте: [РИА Новости](https://ria.ru/)',
-        parse_mode='Markdown'
+        "Выберите категорию новостей РИА Новости:",
+        reply_markup=builder.as_markup()
     )
+
+
+@router.callback_query(F.data.startswith(("zen_", "rbc_", "ria_")))
+async def process_category(callback: types.CallbackQuery):
+    source, category = callback.data.split("_")
+    source_name = {
+        "zen": "Яндекс Дзен",
+        "rbc": "РБК",
+        "ria": "РИА Новости"
+    }[source]
+
+    await callback.message.edit_text(
+        f"Вы выбрали: {source_name} - {category.capitalize()}\n"
+        f"Здесь будут новости этой категории..."
+    )
+    await callback.answer()
+
+
+# Конфигурация парсеров для каждого источника
+NEWS_CONFIG = {
+    "rbc": {
+        "name": "РБК",
+        "categories": {
+            "sport": {
+                "url": "https://www.rbc.ru/sport/",
+                "parser": lambda soup: [
+                    (item.find('span', class_='news-feed__item__title').text.strip(),
+                     item.find('a')['href'])
+                    for item in soup.find_all('div', class_='news-feed__item', limit=3)
+                ]
+            },
+            "auto": {
+                "url": "https://www.rbc.ru/auto/",
+                "parser": lambda soup: [
+                    (item.find('span', class_='news-feed__item__title').text.strip(),
+                     item.find('a')['href'])
+                    for item in soup.find_all('div', class_='news-feed__item', limit=3)
+                ]
+            },
+            "politics": {
+                "url": "https://www.rbc.ru/politics/",
+                "parser": lambda soup: [
+                    (item.find('span', class_='news-feed__item__title').text.strip(),
+                     item.find('a')['href'])
+                    for item in soup.find_all('div', class_='news-feed__item', limit=3)
+                ]
+            }
+        }
+    },
+    "ria": {
+        "name": "РИА Новости",
+        "categories": {
+            "sport": {
+                "url": "https://rsport.ria.ru/",
+                "parser": lambda soup: [
+                    (item.text.strip(),
+                     item['href'] if item['href'].startswith('http') else f"https://rsport.ria.ru{item['href']}")
+                    for item in soup.find_all('a', class_='list-item__title', limit=3)
+                ]
+            },
+            "auto": {
+                "url": "https://ria.ru/transport/",
+                "parser": lambda soup: [
+                    (item.text.strip(),
+                     item['href'] if item['href'].startswith('http') else f"https://ria.ru{item['href']}")
+                    for item in soup.find_all('a', class_='list-item__title', limit=3)
+                ]
+            },
+            "politics": {
+                "url": "https://ria.ru/politics/",
+                "parser": lambda soup: [
+                    (item.text.strip(),
+                     item['href'] if item['href'].startswith('http') else f"https://ria.ru{item['href']}")
+                    for item in soup.find_all('a', class_='list-item__title', limit=3)
+                ]
+            }
+        }
+    },
+    "zen": {
+        "name": "Яндекс Дзен",
+        "categories": {
+            "sport": {
+                "url": "https://zen.yandex.ru/sport",
+                "parser": lambda soup: [
+                    (item.find('h2').text.strip(),
+                     "https://zen.yandex.ru" + item.find('a')['href'])
+                    for item in soup.find_all('article', limit=3)
+                ]
+            },
+            "auto": {
+                "url": "https://zen.yandex.ru/auto",
+                "parser": lambda soup: [
+                    (item.find('h2').text.strip(),
+                     "https://zen.yandex.ru" + item.find('a')['href'])
+                    for item in soup.find_all('article', limit=3)
+                ]
+            },
+            "politics": {
+                "url": "https://zen.yandex.ru/politics",
+                "parser": lambda soup: [
+                    (item.find('h2').text.strip(),
+                     "https://zen.yandex.ru" + item.find('a')['href'])
+                    for item in soup.find_all('article', limit=3)
+                ]
+            }
+        }
+    }
+}
+
+
+# Главное меню
+@router.message(Command("start"))
+async def start(message: types.Message):
+    builder = InlineKeyboardBuilder()
+    for source_id, config in NEWS_CONFIG.items():
+        builder.add(types.InlineKeyboardButton(
+            text=config["name"],
+            callback_data=f"source_{source_id}"
+        ))
+    builder.adjust(1)
+    await message.answer(
+        "📰 Выберите источник новостей:",
+        reply_markup=builder.as_markup()
+    )
+
+
+# Выбор категории
+@router.callback_query(F.data.startswith("source_"))
+async def select_category(callback: types.CallbackQuery):
+    source_id = callback.data.split("_")[1]
+    builder = InlineKeyboardBuilder()
+
+    for category_id in NEWS_CONFIG[source_id]["categories"]:
+        builder.add(types.InlineKeyboardButton(
+            text=category_id.capitalize(),
+            callback_data=f"news_{source_id}_{category_id}"
+        ))
+
+    builder.adjust(1)
+    await callback.message.edit_text(
+        f"Выберите категорию в {NEWS_CONFIG[source_id]['name']}:",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+
+# Парсинг и вывод новостей
+@router.callback_query(F.data.startswith("news_"))
+async def parse_news(callback: types.CallbackQuery):
+    _, source_id, category_id = callback.data.split("_")
+    config = NEWS_CONFIG[source_id]["categories"][category_id]
+
+    try:
+        start_time = datetime.now()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        response = requests.get(config["url"], headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        news_items = config["parser"](soup)
+        response_text = "\n\n".join(
+            [f"📰 {title}\n🔗 {link}" for title, link in news_items]
+        )
+
+        parse_time = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Parsed {source_id}/{category_id} in {parse_time:.2f}s")
+
+        await callback.message.edit_text(
+            f"🔎 {NEWS_CONFIG[source_id]['name']} - {category_id.capitalize()}:\n\n{response_text}"
+        )
+    except Exception as e:
+        logger.error(f"Error parsing {source_id}/{category_id}: {str(e)}")
+        await callback.message.edit_text(
+            f"⚠ Не удалось загрузить новости. Попробуйте позже.\nОшибка: {str(e)}"
+        )
+
+    await callback.answer()
+
+
+if __name__ == "__main__":
+    from aiogram import Dispatcher, Bot
+    import asyncio
+    from dotenv import load_dotenv
+    from os import getenv
+    import logging
+
+    # Загрузка переменных окружения
+    load_dotenv()
+
+    # Настройка логгирования
+    logging.basicConfig(level=logging.INFO)
+
+    # Создание бота с токеном из .env
+    bot = Bot(token=getenv("BOT_TOKEN"))
+    dp = Dispatcher()
+    dp.include_router(router)
+
+    async def main():
+        await dp.start_polling(bot)
+
+    asyncio.run(main())
+
 
 @router.message(F.text == "help")
 async def help_command(message: types.Message):

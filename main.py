@@ -12,10 +12,13 @@ async def main():
     bot = Bot(token=os.getenv("BOT_TOKEN"))
     dp = Dispatcher()
 
-    register_message_handlers(dp)
     await set_my_commands(bot)
+    register_message_handlers(dp)
 
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":

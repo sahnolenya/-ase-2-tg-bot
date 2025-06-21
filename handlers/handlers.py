@@ -1,6 +1,5 @@
 from aiogram import types, Router, F
 from aiogram.filters import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from .keyboard import (
     get_main_keyboard,
     get_news_keyboard,
@@ -11,15 +10,11 @@ from .keyboard import (
 )
 from database import Session, User, generate_tutor_code
 import logging
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime
 
 router = Router()
 logger = logging.getLogger(__name__)
 
 
-# Регистрация пользователя
 async def register_user(user_id: int, username: str, role: str = None, tutorcode: str = None, subscribe: str = None):
     with Session() as session:
         user = session.get(User, user_id)
@@ -40,7 +35,6 @@ async def register_user(user_id: int, username: str, role: str = None, tutorcode
         return user
 
 
-# Обработчики команд
 @router.message(Command("start"))
 async def process_start_command(message: types.Message):
     logger.info(f"User {message.from_user.id} started the bot")
@@ -126,7 +120,6 @@ async def handle_status(message: types.Message):
             )
 
 
-# Новостная система
 @router.message(F.text == "Новости")
 async def handle_news(message: types.Message):
     await message.answer("Выберите источник новостей:", reply_markup=get_news_keyboard())
@@ -153,121 +146,62 @@ async def handle_news_source(message: types.Message):
     await message.answer(f"Выберите категорию для {message.text}:", reply_markup=get_categories_keyboard(source))
 
 
-@router.message(F.text.in_(["Спорт", "Авто", "Политика"]))
+@router.message(F.text.in_(["Спорт", "Политика", "Авто", "Наука"]))
 async def handle_category(message: types.Message):
-    source = "yandex"  # В реальной реализации это должно быть из состояния
-    news_text = await parse_news(source, message.text)
-    await message.answer(news_text, reply_markup=get_main_keyboard())
+    # Словарь с ссылками для всех категорий
+    category_links = {
+        "yandex": {
+            "Спорт": "https://sportsdzen.ru/news/rubric/sport?utm_source=yxnews&utm_medium=desktop",
+            "Политика": "https://dzen.ru/news/rubric/politics",
+            "Авто": "https://dzen.ru/news/rubric/auto"
+        },
+        "rbc": {
+            "Спорт": "https://sportrbc.ru/?utm_source=topline",
+            "Политика": "https://www.rbc.ru/politics/?utm_source=topline",
+            "Авто": "https://www.autonews.ru/?utm_source=topline"
+        },
+        "ria": {
+            "Спорт": "https://rsport.ria.ru/",
+            "Политика": "https://ria.ru/politics/",
+            "Наука": "https://ria.ru/science/"
+        }
+    }
+
+    # Определяем источник по категории
+    if message.text == "Наука":
+        source = "ria"
+    elif message.text in category_links["yandex"]:
+        source = "yandex"
+    else:
+        source = "rbc"
+
+    link = category_links[source][message.text]
+
+    source_names = {
+        "yandex": "Яндекс Дзен",
+        "rbc": "РБК",
+        "ria": "РИА Новости"
+    }
+
+    await message.answer(
+        f"📰 {source_names[source]} - {message.text}\n🔗 {link}",
+        reply_markup=get_main_keyboard()
+    )
 
 
 @router.message(F.text == "CNN International")
 async def handle_cnn(message: types.Message):
-    news_text = await parse_cnn_news()
-    await message.answer(news_text, reply_markup=get_main_keyboard())
+    await message.answer("🌐 CNN International News\n🔗 https://edition.cnn.com", reply_markup=get_main_keyboard())
 
 
 @router.message(F.text == "Japan News")
 async def handle_japan_news(message: types.Message):
-    news_text = await parse_japan_news()
-    await message.answer(news_text, reply_markup=get_main_keyboard())
+    await message.answer("🗾 Japan Times News\n🔗 https://www.japantimes.co.jp", reply_markup=get_main_keyboard())
 
 
 @router.message(F.text == "Назад")
 async def handle_back(message: types.Message):
     await message.answer("Главное меню", reply_markup=get_main_keyboard())
-
-
-# Парсеры новостей
-async def parse_news(source: str, category: str) -> str:
-    url_mapping = {
-        "yandex": {
-            "Спорт": "https://zen.yandex.ru/sport",
-            "Авто": "https://zen.yandex.ru/auto",
-            "Политика": "https://zen.yandex.ru/politics"
-        },
-        "rbc": {
-            "Спорт": "https://www.rbc.ru/sport/",
-            "Авто": "https://www.rbc.ru/auto/",
-            "Политика": "https://www.rbc.ru/politics/"
-        },
-        "ria": {
-            "Спорт": "https://rsport.ria.ru/",
-            "Авто": "https://ria.ru/transport/",
-            "Политика": "https://ria.ru/politics/"
-        }
-    }
-
-    url = url_mapping[source][category]
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    try:
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        news = []
-        if source == "yandex":
-            items = soup.find_all('article', limit=3)
-            for item in items:
-                title = item.find('h2').text.strip()
-                link = "https://zen.yandex.ru" + item.find('a')['href']
-                news.append(f"📰 {title}\n🔗 {link}")
-        elif source == "rbc":
-            items = soup.find_all('div', class_='news-feed__item', limit=3)
-            for item in items:
-                title = item.find('span', class_='news-feed__item__title').text.strip()
-                link = item.find('a')['href']
-                news.append(f"📰 {title}\n🔗 {link}")
-        elif source == "ria":
-            items = soup.find_all('a', class_='list-item__title', limit=3)
-            for item in items:
-                title = item.text.strip()
-                link = item['href'] if item['href'].startswith('http') else f"https://ria.ru{item['href']}"
-                news.append(f"📰 {title}\n🔗 {link}")
-
-        return "\n\n".join(news) if news else "Не удалось найти новости"
-    except Exception as e:
-        logger.error(f"Ошибка парсинга: {str(e)}")
-        return "Ошибка при получении новостей. Попробуйте позже."
-
-
-async def parse_cnn_news() -> str:
-    try:
-        url = "https://edition.cnn.com/world"
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        news = []
-        items = soup.find_all('h3', class_='container__headline', limit=3)
-        for item in items:
-            title = item.text.strip()
-            link = "https://edition.cnn.com" + item.find('a')['href']
-            news.append(f"🌐 {title}\n🔗 {link}")
-
-        return "\n\n".join(news) if news else "Не удалось найти новости CNN"
-    except Exception as e:
-        logger.error(f"Ошибка парсинга CNN: {str(e)}")
-        return "Ошибка при получении новостей CNN"
-
-
-async def parse_japan_news() -> str:
-    try:
-        url = "https://www.japantimes.co.jp/news/"
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        news = []
-        items = soup.find_all('div', class_='post-style1', limit=3)
-        for item in items:
-            title = item.find('h2').text.strip()
-            link = item.find('a')['href']
-            news.append(f"🗾 {title}\n🔗 {link}")
-
-        return "\n\n".join(news) if news else "Не удалось найти новости Japan Times"
-    except Exception as e:
-        logger.error(f"Ошибка парсинга Japan News: {str(e)}")
-        return "Ошибка при получении новостей из Японии"
 
 
 @router.message(F.text == "help")

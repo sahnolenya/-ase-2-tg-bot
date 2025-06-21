@@ -1,7 +1,7 @@
 from aiogram import types, Router, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from keyboard import get_main_keyboard, get_news_keyboard, get_role_keyboard, get_confirm_keyboard
+from handlers.keyboard import get_main_keyboard, get_news_keyboard, get_role_keyboard, get_confirm_keyboard
 from database import Session, User, generate_tutor_code
 import logging
 import requests

@@ -14,6 +14,9 @@ import logging
 router = Router()
 logger = logging.getLogger(__name__)
 
+# Глобальная переменная для хранения выбранного источника
+current_source = None
+
 
 async def register_user(user_id: int, username: str, role: str = None, tutorcode: str = None, subscribe: str = None):
     with Session() as session:
@@ -39,13 +42,14 @@ async def register_user(user_id: int, username: str, role: str = None, tutorcode
 async def process_start_command(message: types.Message):
     logger.info(f"User {message.from_user.id} started the bot")
     await message.answer(
-        "Привет! Кто вы? Преподаватель или слушатель?",
+        "👋 Привет! Кто вы? Преподаватель или слушатель?",
         reply_markup=get_role_keyboard()
     )
 
 
 @router.message(F.text == "Преподаватель")
 async def handle_teacher(message: types.Message):
+    logger.info(f"User {message.from_user.id} selected teacher role")
     tutor_code = generate_tutor_code()
     await register_user(
         message.from_user.id,
@@ -54,21 +58,23 @@ async def handle_teacher(message: types.Message):
         tutorcode=tutor_code
     )
     await message.answer(
-        f"Вы зарегистрированы как преподаватель. Ваш код для студентов: {tutor_code}",
+        f"👨‍🏫 Вы зарегистрированы как преподаватель. Ваш код для студентов: {tutor_code}",
         reply_markup=get_main_keyboard()
     )
 
 
 @router.message(F.text == "Слушатель")
 async def handle_student(message: types.Message):
+    logger.info(f"User {message.from_user.id} selected student role")
     await message.answer(
-        "Введите код преподавателя для подтверждения:",
+        "📝 Введите код преподавателя для подтверждения:",
         reply_markup=get_confirm_keyboard()
     )
 
 
 @router.message(F.text.regexp(r'^[A-Z0-9]{6}$'))
 async def handle_tutor_code(message: types.Message):
+    logger.info(f"User {message.from_user.id} entered tutor code")
     with Session() as session:
         teacher = session.query(User).filter(
             User.tutorcode == message.text,
@@ -83,73 +89,73 @@ async def handle_tutor_code(message: types.Message):
                 subscribe=teacher.username
             )
             await message.answer(
-                f"Вы успешно подписаны на преподавателя {teacher.username}!",
+                f"✅ Вы успешно подписаны на преподавателя {teacher.username}!",
                 reply_markup=get_main_keyboard()
             )
         else:
             await message.answer(
-                "Неверный код преподавателя. Попробуйте еще раз.",
+                "❌ Неверный код преподавателя. Попробуйте еще раз.",
                 reply_markup=get_confirm_keyboard()
             )
 
 
 @router.message(Command("status"))
 async def handle_status(message: types.Message):
+    logger.info(f"User {message.from_user.id} checked status")
     with Session() as session:
         user = session.get(User, message.from_user.id)
 
         if not user:
-            await message.answer(
-                "Вы не зарегистрированы. Нажмите /start для регистрации."
-            )
+            await message.answer("❌ Вы не зарегистрированы. Нажмите /start для регистрации.")
             return
 
         if user.role == "student":
             await message.answer(
-                f"Ваш статус: Слушатель\n"
-                f"ID: {user.userid}\n"
-                f"Имя: {user.username}\n"
-                f"Преподаватель: {user.subscribe}"
+                f"👨‍🎓 Ваш статус: Слушатель\n"
+                f"🆔 ID: {user.userid}\n"
+                f"👤 Имя: {user.username}\n"
+                f"👨‍🏫 Преподаватель: {user.subscribe}"
             )
         elif user.role == "teacher":
+            students = session.query(User).filter(
+                User.subscribe == user.username
+            ).count()
             await message.answer(
-                f"Ваш статус: Преподаватель\n"
-                f"ID: {user.userid}\n"
-                f"Имя: {user.username}\n"
-                f"Код для студентов: {user.tutorcode}"
+                f"👨‍🏫 Ваш статус: Преподаватель\n"
+                f"🆔 ID: {user.userid}\n"
+                f"👤 Имя: {user.username}\n"
+                f"🔑 Код для студентов: {user.tutorcode}\n"
+                f"👨‍🎓 Студентов: {students}"
             )
 
 
 @router.message(F.text == "Новости")
 async def handle_news(message: types.Message):
-    await message.answer("Выберите источник новостей:", reply_markup=get_news_keyboard())
-
-
-@router.message(F.text == "Международные")
-async def handle_international(message: types.Message):
-    await message.answer("Выберите международный источник:", reply_markup=get_international_news_keyboard())
-
-
-@router.message(F.text == "Обновить")
-async def handle_refresh(message: types.Message):
-    await message.answer("Новости обновлены!", reply_markup=get_main_keyboard())
+    logger.info(f"User {message.from_user.id} opened news")
+    await message.answer("📰 Выберите источник новостей:", reply_markup=get_news_keyboard())
 
 
 @router.message(F.text.in_(["Яндекс Дзен", "Новости РБК", "РИА Новости"]))
 async def handle_news_source(message: types.Message):
+    global current_source
+    logger.info(f"User {message.from_user.id} selected {message.text}")
     source_map = {
         "Яндекс Дзен": "yandex",
         "Новости РБК": "rbc",
         "РИА Новости": "ria"
     }
-    source = source_map[message.text]
-    await message.answer(f"Выберите категорию для {message.text}:", reply_markup=get_categories_keyboard(source))
+    current_source = source_map[message.text]
+    await message.answer(f"📰 Выберите категорию для {message.text}:",
+                         reply_markup=get_categories_keyboard(current_source))
 
 
 @router.message(F.text.in_(["Спорт", "Политика", "Авто", "Наука"]))
 async def handle_category(message: types.Message):
-    # Словарь с ссылками для всех категорий
-    category_links = {
+    global current_source
+    logger.info(f"User {message.from_user.id} selected category {message.text}")
+
+    # Словарь ссылок для всех источников
+    news_links = {
         "yandex": {
             "Спорт": "https://sportsdzen.ru/news/rubric/sport?utm_source=yxnews&utm_medium=desktop",
             "Политика": "https://dzen.ru/news/rubric/politics",
@@ -167,50 +173,68 @@ async def handle_category(message: types.Message):
         }
     }
 
-    # Определяем источник по категории
-    if message.text == "Наука":
-        source = "ria"
-    elif message.text in category_links["yandex"]:
-        source = "yandex"
+    if current_source and message.text in news_links[current_source]:
+        link = news_links[current_source][message.text]
+        source_names = {
+            "yandex": "Яндекс Дзен",
+            "rbc": "РБК",
+            "ria": "РИА Новости"
+        }
+        await message.answer(
+            f"📰 {source_names[current_source]} - {message.text}\n🔗 {link}",
+            reply_markup=get_main_keyboard()
+        )
     else:
-        source = "rbc"
+        await message.answer("❌ Ссылка не найдена", reply_markup=get_main_keyboard())
 
-    link = category_links[source][message.text]
 
-    source_names = {
-        "yandex": "Яндекс Дзен",
-        "rbc": "РБК",
-        "ria": "РИА Новости"
-    }
-
-    await message.answer(
-        f"📰 {source_names[source]} - {message.text}\n🔗 {link}",
-        reply_markup=get_main_keyboard()
-    )
+@router.message(F.text == "Международные")
+async def handle_international(message: types.Message):
+    logger.info(f"User {message.from_user.id} selected international news")
+    await message.answer("🌍 Выберите международный источник:", reply_markup=get_international_news_keyboard())
 
 
 @router.message(F.text == "CNN International")
 async def handle_cnn(message: types.Message):
+    logger.info(f"User {message.from_user.id} selected CNN")
     await message.answer("🌐 CNN International News\n🔗 https://edition.cnn.com", reply_markup=get_main_keyboard())
 
 
 @router.message(F.text == "Japan News")
 async def handle_japan_news(message: types.Message):
+    logger.info(f"User {message.from_user.id} selected Japan News")
     await message.answer("🗾 Japan Times News\n🔗 https://www.japantimes.co.jp", reply_markup=get_main_keyboard())
+
+
+@router.message(F.text == "Обновить")
+async def handle_refresh(message: types.Message):
+    logger.info(f"User {message.from_user.id} refreshed news")
+    await message.answer("🔄 Новости обновлены!", reply_markup=get_main_keyboard())
 
 
 @router.message(F.text == "Назад")
 async def handle_back(message: types.Message):
-    await message.answer("Главное меню", reply_markup=get_main_keyboard())
+    logger.info(f"User {message.from_user.id} went back")
+    await message.answer("🔙 Главное меню", reply_markup=get_main_keyboard())
 
 
+@router.message(Command("help"))
 @router.message(F.text == "help")
 async def help_command(message: types.Message):
     logger.info(f"User {message.from_user.id} requested help")
-    await message.answer("Это бот для просмотра новостей. Доступные команды:\n"
-                         "/start - начать работу с ботом\n"
-                         "/status - показать ваш статус\n"
-                         "Новости - выбрать источник новостей")
+    help_text = """
+📚 Доступные команды:
+/start - 🚀 Начать работу
+/status - 📊 Ваш статус
+/news - 📰 Открыть новости
+/cancel - ❌ Отмена действия
+
+📌 Основные функции:
+- Для преподавателей: создание кода доступа
+- Для студентов: подписка на преподавателя
+- Просмотр новостей по категориям
+"""
+    await message.answer(help_text)
 
 
 def register_message_handlers(dp):

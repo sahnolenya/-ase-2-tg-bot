@@ -3,8 +3,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="/start"), KeyboardButton(text="/status")],
-            [KeyboardButton(text="/help")],
+            [KeyboardButton(text="🔄 Перезапуск"), KeyboardButton(text="📊 Мой статус")],
+            [KeyboardButton(text="❓ Помощь")],
             [KeyboardButton(text="📰 Новости")]
         ],
         resize_keyboard=True

@@ -51,20 +51,20 @@ async def handle_status(message: types.Message):
 async def help_command(message: types.Message):
     await show_help(message)
 
-# Обработчики текстовых сообщений (без /)
-@router.message(F.text.lower() == "start")
-async def handle_text_start(message: types.Message):
+# Обработчики текстовых кнопок
+@router.message(F.text.in_(["🔄 Перезапуск", "Перезапуск"]))
+async def handle_restart(message: types.Message):
     await process_start_command(message)
 
-@router.message(F.text.lower() == "status")
-async def handle_text_status(message: types.Message):
+@router.message(F.text.in_(["📊 Мой статус", "Мой статус", "Статус"]))
+async def handle_my_status(message: types.Message):
     await show_status(message)
 
-@router.message(F.text.lower() == "help")
-async def handle_text_help(message: types.Message):
+@router.message(F.text.in_(["❓ Помощь", "Помощь"]))
+async def handle_help_button(message: types.Message):
     await show_help(message)
 
-# Общие функции для показа статуса и помощи
+# Общие функции
 async def show_status(message: types.Message):
     logger.info(f"User {message.from_user.id} checked status")
     with Session() as session:

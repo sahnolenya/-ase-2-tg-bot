@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import asyncio
 from aiogram import Bot, Dispatcher
 from handlers.bot_commands import set_my_commands
@@ -12,7 +13,10 @@ async def main():
     bot = Bot(token=os.getenv("BOT_TOKEN"))
     dp = Dispatcher()
 
+    # Устанавливаем команды бота
     await set_my_commands(bot)
+
+    # Регистрируем обработчики
     register_message_handlers(dp)
 
     try:

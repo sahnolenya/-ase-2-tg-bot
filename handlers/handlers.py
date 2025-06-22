@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 from aiogram import types, Router, F
 from aiogram.filters import Command
+from config.config import logger
 from .keyboard import (
     get_main_keyboard,
     get_news_keyboard,
@@ -9,13 +11,9 @@ from .keyboard import (
     get_confirm_keyboard
 )
 from database import Session, User, generate_tutor_code
-import logging
 
 router = Router()
-logger = logging.getLogger(__name__)
-
-# Глобальная переменная для хранения выбранного источника
-current_source = None
+current_source = None  # Для хранения выбранного источника новостей
 
 
 async def register_user(user_id: int, username: str, role: str = None, tutorcode: str = None, subscribe: str = None):
@@ -47,7 +45,7 @@ async def process_start_command(message: types.Message):
     )
 
 
-@router.message(F.text == "Преподаватель")
+@router.message(F.text == "👨‍🏫 Преподаватель")
 async def handle_teacher(message: types.Message):
     logger.info(f"User {message.from_user.id} selected teacher role")
     tutor_code = generate_tutor_code()
@@ -63,7 +61,7 @@ async def handle_teacher(message: types.Message):
     )
 
 
-@router.message(F.text == "Слушатель")
+@router.message(F.text == "👨‍🎓 Слушатель")
 async def handle_student(message: types.Message):
     logger.info(f"User {message.from_user.id} selected student role")
     await message.answer(
@@ -129,7 +127,8 @@ async def handle_status(message: types.Message):
             )
 
 
-@router.message(F.text == "Новости")
+@router.message(Command("news"))
+@router.message(F.text == "📰 Новости")
 async def handle_news(message: types.Message):
     logger.info(f"User {message.from_user.id} opened news")
     await message.answer("📰 Выберите источник новостей:", reply_markup=get_news_keyboard())
@@ -149,10 +148,13 @@ async def handle_news_source(message: types.Message):
                          reply_markup=get_categories_keyboard(current_source))
 
 
-@router.message(F.text.in_(["Спорт", "Политика", "Авто", "Наука"]))
+@router.message(F.text.in_(["⚽ Спорт", "🏛️ Политика", "🚗 Авто", "🔬 Наука"]))
 async def handle_category(message: types.Message):
     global current_source
     logger.info(f"User {message.from_user.id} selected category {message.text}")
+
+    # Убираем эмодзи для сопоставления
+    clean_text = message.text[2:]  # Удаляем первые 2 символа (эмодзи)
 
     # Словарь ссылок для всех источников
     news_links = {
@@ -173,8 +175,8 @@ async def handle_category(message: types.Message):
         }
     }
 
-    if current_source and message.text in news_links[current_source]:
-        link = news_links[current_source][message.text]
+    if current_source and clean_text in news_links[current_source]:
+        link = news_links[current_source][clean_text]
         source_names = {
             "yandex": "Яндекс Дзен",
             "rbc": "РБК",
@@ -188,38 +190,38 @@ async def handle_category(message: types.Message):
         await message.answer("❌ Ссылка не найдена", reply_markup=get_main_keyboard())
 
 
-@router.message(F.text == "Международные")
+@router.message(F.text == "🌍 Международные")
 async def handle_international(message: types.Message):
     logger.info(f"User {message.from_user.id} selected international news")
     await message.answer("🌍 Выберите международный источник:", reply_markup=get_international_news_keyboard())
 
 
-@router.message(F.text == "CNN International")
+@router.message(F.text == "🌐 CNN International")
 async def handle_cnn(message: types.Message):
     logger.info(f"User {message.from_user.id} selected CNN")
     await message.answer("🌐 CNN International News\n🔗 https://edition.cnn.com", reply_markup=get_main_keyboard())
 
 
-@router.message(F.text == "Japan News")
+@router.message(F.text == "🗾 Japan News")
 async def handle_japan_news(message: types.Message):
     logger.info(f"User {message.from_user.id} selected Japan News")
     await message.answer("🗾 Japan Times News\n🔗 https://www.japantimes.co.jp", reply_markup=get_main_keyboard())
 
 
-@router.message(F.text == "Обновить")
+@router.message(F.text == "🔄 Обновить")
 async def handle_refresh(message: types.Message):
     logger.info(f"User {message.from_user.id} refreshed news")
     await message.answer("🔄 Новости обновлены!", reply_markup=get_main_keyboard())
 
 
-@router.message(F.text == "Назад")
+@router.message(Command("cancel"))
+@router.message(F.text == "🔙 Назад")
 async def handle_back(message: types.Message):
     logger.info(f"User {message.from_user.id} went back")
     await message.answer("🔙 Главное меню", reply_markup=get_main_keyboard())
 
 
 @router.message(Command("help"))
-@router.message(F.text == "help")
 async def help_command(message: types.Message):
     logger.info(f"User {message.from_user.id} requested help")
     help_text = """

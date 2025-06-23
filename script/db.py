@@ -10,20 +10,18 @@ class User(Base):
 
     userid = Column(Integer, primary_key=True)
     username = Column(String)
-    role = Column(String)  # 'teacher' или 'student'
+    role = Column(String)
     tutorcode = Column(String, nullable=True)
     subscribe = Column(String, nullable=True)
     extra = Column(String, nullable=True)
 
     def __repr__(self):
-        return f"<User(id={self.userid}, name={self.username}, role={self.role})>"
+        return f"<User(userid={self.userid}, username={self.username}, role={self.role})>"
 
-def init_db():
-    engine = create_engine('sqlite:///bot.db')
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)
+engine = create_engine('sqlite:///bot.db')
+Base.metadata.create_all(engine)
 
-Session = init_db()
+Session = sessionmaker(bind=engine)
 
 def generate_tutor_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))

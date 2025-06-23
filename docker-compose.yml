@@ -6,3 +6,5 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./bot.db:/app/bot.db  # Добавляем volume для БД
